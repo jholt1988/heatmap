@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+0
+<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6"></script>
+
+<div id="SVGContainer"></div>
+<script type="module">
+  const dataUrl = "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json";
+
+  const margin = {
+    top: 30,
+    left: 60,
+    right: 20,
+    bottom: 40
+  }
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ]
+
+  const width = 1100 + margin.right;
+  const height = 550 + margin.bottom + margin.top;
+
+
+  // const dateFormat = d3.format('%Y')
+
+  const title = d3.select("#SVGContainer")
+    .append("h1")
+    .attr("id", "title")
+    .text("Monthly Global Land-Surface Temperature")
+
+  const description = d3.select("#SVGContainer")
+    .append('h5')
+    .attr('id', "description")
+    .text("1753- 2015: Base Temperature 8.66° C")
+  const svg = d3.select('#SVGContainer')
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.bottom + margin.top)
+  const div = d3
+    .select('#SVGContainer')
+    .append("div")
+    .attr('class', 'tooltip')
+    .attr('id', 'tooltip')
+    .style('opacity', 0);
+
+
+  // const timeParser = d3.timeParse('%B')
+  // const timeFormat = d3.timeFormat("%B")
+  // const xAxis = d3.axisBottom(x).ticks(10).tickFormat(d3.format("d"))
+  // const yAxis = d3.axisLeft(y).tickFormat(timeFormat)
+
+  // month =>{ 
+  // const date =  new Date(0)
+  // date.setUTCMonth(month)
+  // return d3.timeFormat('%B')(date)
+
+
+  // })
+
+  let legendData = d3.json(dataUrl).then( (data) =>{
+    
+
+  return data.monthlyVariance.variance
+
+  }).catch((err) => console.error)
+  let legendTickValues = []
+console.log(legendData)
+
+ 
+	
+
+  d3.json(dataUrl)
+    .then((data) => {
+
+      
+
+      //Parse Data
+
+      //Get baseTemp
+      const { baseTemp } = data
+
+      //Get X-axis data
+      const xData = data.monthlyVariance.map((d) => d.year)
+
+      //Get Y-axis data
+      const yData = data.monthlyVariance.map((d) => d.month)
+
+      // Get chart data 
+      const variance = data.monthlyVariance.map((d) => d.variance)
+
+      // data ranges
+
+      const xAxisMax = d3.max(xData)
+      const xAxisMin = d3.min(xData)
+      const yAxisMax = d3.max(yData)
+      const yAxisMin = d3.min(yData)
+      const varianceMax = d3.max(variance)
+      const varianceMin = d3.min(variance)
+
+      //Scales
+
+      const yScale = d3.scaleLinear().domain([yAxisMin, yAxisMax + .5]).range([margin.bottom, height - margin.top])
+
+      const xScale = d3.scaleLinear().domain([xAxisMin, xAxisMax]).range([margin.left, width])
+
+      var colorsScale = d3.scaleSequential(d3.schemeTableau10)
+      //Determine Legend axis
+      const varianceDiff = varianceMax - varianceMin
+
+      const legendTicks = 10
+
+
+      for (let i = 0; i <= varianceDiff; i++) {
+        legendTickValues.push(varianceDiff * i / legendTicks)
+      }
+
+      const xAxis = d3.axisBottom(xScale).tickFormat(d3.format('d'))
+      const yAxis = d3.axisLeft(yScale).tickFormat(((month) => {
+        const date = new Date(0)
+        date.setUTCMonth(month)
+        return d3.timeFormat('%B')(date)
+      }))
+      svg
+        .append('g')
+        .attr('class', 'x axis')
+        .attr('id', 'x-axis')
+        .call(xAxis)
+        .attr("transform", "translate(1," + height + ")")
+        .append('text')
+        .attr('class', 'x-axis-label')
+        .style('text-anchor', 'end')
+        .text('Year');
+
+      svg
+        .append('g')
+        .attr('class', 'y axis')
+        .attr('id', 'y-axis')
+        .call(yAxis)
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .append('text')
+        .attr('class', 'label')
+        .attr('transform', 'rotate(-90)')
+        .style('text-anchor', 'end')
+        .text('Months')
+
+      const yearRange = xAxisMax - xAxisMin
+      const cells = svg.selectAll(".cell")
+        .data(data.monthlyVariance)
+        .enter()
+        .append('rect')
+        .attr('class', 'cell')
+        .attr('width', 5)
+        .attr('height', 35)
+        .attr('transform', 'translate(0, 20)')
+        .attr('x', (d) => xScale(d.year))
+        .attr('y', (d) => yScale(d.month))
+
+
+        .attr('data-year', (d) => d.year)
+        .attr('data-month', (d) => d.month - 1)
+        .attr('data-temp', (d) => baseTemp - d.variance)
+        .style('fill', (d) => colorsScale(d.variance))
+        .on('mouseover', function (event, d) {
+          div.style('opacity', 0.9);
+          div.attr('data-year', d.year);
+          div
+            .html(
+
+              months[d.month - 1] +
+
+              d.year +
+              '<br/>' +
+              'Temperature ' +
+              (baseTemp + d.variance) +
+              ', Variance: ' +
+              d.variance
+
+            )
+
+        })
+        .on('mouseout', function () {
+          div.style('opacity', 0);
+        });
+
+     
+        const legend = 
+  svg.append("g")
+        .attr("id", "legend")
+        .attr("transform", (d, i) => {
+          return `translate(${20 * i}, 0)`;
+        });
+
+        console.log(legendTickValues)
+
+        legend.selectAll('rect')
+    .data(legendTickValues)
+    .enter()
+    .append("rect")
+    .attr("x", (d, i) =>i*13 )
+		.attr("y", height+40)
+    .attr('width', 20)
+		.attr('height', 20)
+    .attr("class", "legend")
+    .style("fill",(d) => colorsScale(d))
+		.style("stroke", "#848484")
+		.style("stroke-width", 0.25)
+
+   const legendAxis = legendTickValues.map((d) => Math.floor(d))
+	
+    legend.append("text")
+    .attr("x", 20)
+    .attr("y", height + 65)
+    .style("text-anchor", "middle")
+    .text(d => {
+     return  Math.floor(Number(d))
+    })
+      
+
+
+
+      console.log(data)
+
+
+
+
+
+
+
+    }).catch((err) => {
+      console.error(err)
+    })
+
+ 
+    const legendColor = d3.scaleLinear(d3.schemeTableau10)
+   // const legendScale = legendColor.domain([varianceMin, varianceMax]).range([0, width])
+     // const legendAxis = d3.axisBottom(legendScale)
+
+  
+</script>
+
+
+
+<script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>

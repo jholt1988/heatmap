@@ -1,0 +1,23 @@
+{
+  "name": "heatmap",
+  "version": "1.0.0",
+  "description": "A FCCC data visualization project. At heatmap graph using D3lbirary",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1", 
+     "start": "nodemon . -r"
+  
+  },
+  "keywords": [
+    "fccc",
+    "D3",
+    "datavisualization",
+    "project",
+    "heatmap"
+  ],
+  "author": "JA Holt",
+  "license": "ISC",
+  "dependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
